@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>tom black</title>
+    <meta name="description" content="Tom Black – Navy veteran, tech entrepreneur, and software craftsman living in NYC.">
+    <!--
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/7.3/styles/ir_black.min.css">
+    Styles:
+      dark
+      ir_black
+      rainbow
+      monokai
+      tomorrow-night-bright
+      tomorrow-night-blue
+      tomorrow-night-eighties
+      tomorrow-night
+    -->
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/page.css">
+    <script src="http://use.typekit.com/hzw5hwn.js"></script>
+    <script>try{Typekit.load();}catch(e){}</script>
+  </head>
+  <body>
+    
+    <div class='header section'><div class='content'><a href='/'>tom black</a> &rsaquo; <a href='/talks'>talks</a> &rsaquo; building web apps with rack and sinatra</div></div>
+    
+    <div class="page section">
+      <div class="content">
+        <h1>Building Web Apps <br> with Rack and Sinatra</h1>
+
+<h2>Getting Started</h2>
+
+<p>In this document:</p>
+
+<ul>
+<li><a href="#simple_rack">A Simple Rack App</a></li>
+<li><a href="#building_middleware">Building Middleware</a></li>
+<li><a href="#simple_sinatra">A Simple Sinatra App</a></li>
+<li><a href="#messages">Messages</a></li>
+</ul>
+
+<p><a href="http://s3.amazonaws.com/blacktm/building_web_apps_with_rack_and_sinatra.zip">Download Project Files</a></p>
+
+<h2>Slides</h2>
+
+<!-- Slide Deck -->
+
+<script async class="speakerdeck-embed" data-id="507d7b0da2a4030002054ecc" data-ratio="1.3333333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+<p><a name="simple_rack"></a></p>
+
+<h2>A Simple Rack App</h2>
+
+<p>In the <code>simple_rack</code> folder, edit the <code>config.ru</code> file.</p>
+
+<pre><code class="ruby"># config.ru - rackup file
+require &#39;rack&#39;
+
+class MyApp
+  def call(env)
+    headers = { &quot;Content-Type&quot; =&gt; &quot;text/html&quot; }
+    [200, headers, [&quot;Hello world!&quot;]]
+  end
+end
+
+run MyApp.new
+</code></pre>
+
+<p>To start the server, run:</p>
+
+<pre><code class="no-highlight">$ rackup config.ru
+&gt;&gt; Thin web server (v1.5.0 codename Knife)
+&gt;&gt; Maximum connections set to 1024
+&gt;&gt; Listening on 0.0.0.0:9292, CTRL+C to stop
+</code></pre>
+
+<p>For every request, this app will return a status code of &quot;200 OK&quot; and &quot;Hello world!&quot; as the body.</p>
+
+<p>Open <code>http://0.0.0.0:9292</code>, it shows &quot;Hello world!&quot; in the browser.</p>
+
+<p>Every URL shows the same:</p>
+
+<pre><code class="no-highlight">http://0.0.0.0:9292
+
+ #=&gt; Hello world!
+
+http://0.0.0.0:9292/there/isnt/a/route/here
+
+ #=&gt; Hello world!
+</code></pre>
+
+<p><a name="building_middleware"></a></p>
+
+<h2>Building Middleware</h2>
+
+<p>In the <code>rack_middleware</code> folder, edit the <code>config.ru</code> file.</p>
+
+<pre><code class="ruby"># config.ru
+
+require &quot;./app.rb&quot;
+
+class ContentType
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    status, headers, body = @app.call(env)
+    puts &quot;Hello from ContentType&quot;
+
+    # TODO: Add &quot;Content-Type&quot; to the HTTP
+    #       headers and return the response.
+
+    headers.merge!( &quot;Content-Type&quot; =&gt; &quot;text/html&quot; )
+    return [status, headers, body]
+  end
+end
+
+class FinishSentence
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    status, headers, body = @app.call(env)
+    puts &quot;Hello from FinishSentence&quot;
+
+    # TODO: Add &quot; world!&quot; to the HTTP
+    #       body and return the response.
+
+    body.push(&quot; world!&quot;)
+    return [status, headers, body]
+  end
+end
+
+use Rack::ContentLength
+
+# TODO: Tell the app to use the &quot;ContentType&quot;
+#       and &quot;FinishSentence&quot; middleware.
+use ContentType
+use FinishSentence
+
+run MyApp.new
+</code></pre>
+
+<p><a name="simple_sinatra"></a></p>
+
+<h2>A Simple Sinatra App</h2>
+
+<p>In the <code>simple_sinatra</code> folder, edit the <code>config.ru</code> file.</p>
+
+<pre><code class="ruby"># config.ru
+require &#39;sinatra&#39;
+
+get &#39;/&#39; do
+  &quot;Hello Sinatra!&quot;
+end
+
+run Sinatra::Application
+</code></pre>
+
+<p>Fire it up:</p>
+
+<pre><code class="bash">$ rackup config.ru
+</code></pre>
+
+<p>Add some more stuff to our Sinatra app:</p>
+
+<pre><code class="ruby"># config.ru
+require &#39;sinatra&#39;
+
+get &#39;/&#39; do
+  &quot;Hello Sinatra!&quot;
+end
+
+get &#39;/hello/:name&#39; do |n|
+  &quot;Hello #{n}!&quot;
+end
+
+get &#39;/wildcard/*&#39; do
+  request.inspect
+end
+
+error 404 do
+  &quot;OMG, 404!&quot;
+end
+
+get &#39;/breakit&#39; do
+  500
+end
+
+run Sinatra::Application
+</code></pre>
+
+<p><a name="messages"></a></p>
+
+<h2>Messages</h2>
+
+<p>Open the <code>messages</code> folder and edit the following files.</p>
+
+<p>In <code>app.rb</code>:</p>
+
+<pre><code class="ruby">class Message
+  # TODO: Use this class as a table in the database
+
+  # SOLUTION:
+  include DataMapper::Resource
+
+  property :id, Serial            # Auto-increment integer id
+  property :from, String          # A short string of text
+  property :content, Text         # A longer text block
+  property :created_at, DateTime  # Auto assigns data/time
+end
+</code></pre>
+
+<pre><code class="ruby">post &#39;/&#39; do
+  # TODO: Read the incoming message, save it to the database
+
+  # SOLUTION:
+  message = request.POST
+  @message_row = Message.new(:from =&gt; message[&quot;from&quot;],
+                             :content =&gt; message[&quot;content&quot;])
+  @message_row.save
+
+  &quot;success&quot;
+end
+</code></pre>
+
+<p>In <code>views/messages.erb</code>:</p>
+
+<pre><code class="erb">&lt;!-- TODO: Add messages to the page --&gt;
+
+&lt;!-- SOLUTION: --&gt;
+&lt;% @messages.each do |m| %>;
+  &lt;div class=&quot;message&quot;&gt;
+    &lt;a href=&quot;&quot; class=&quot;close&quot;&gt;&lt;/a&gt;
+    &lt;div class=&quot;from&quot;&gt;
+       m.from %&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;content&quot;&gt;
+      &lt;%= m.content %&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;time&quot;&gt;
+      &lt;%= m.created_at %&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;% end %&gt;
+</code></pre>
+
+<p>In <code>post_message.rb</code>:</p>
+
+<pre><code class="ruby"># TODO: Post the message to the server
+
+# SOLUTION:
+response = Net::HTTP.post_form(uri, &quot;from&quot; =&gt; from,
+                                    &quot;to&quot; =&gt; to,
+                                    &quot;content&quot; =&gt; content)
+</code></pre>
+
+<h3>Deployment</h3>
+
+<pre><code class="no-highlight"># Initialize the repository
+$ git init
+
+# Add new files to the repo
+$ git add .
+
+# See the status
+$ git status
+
+# Commit the changes with the commit message &quot;testing&quot;
+$ git commit -m &quot;testing&quot;
+
+# Create a new Heroku app
+$ heroku create
+
+# Rename the Heroku app
+# Example: $ heroku rename tom-messages
+$ heroku rename &lt;YOUR_FIRST_NAME&gt;-messages
+
+# Add a (free) PostgreSQL database to your app
+$ heroku addons:add heroku-postgresql
+
+# See the details of your new database
+$ heroku pg:info
+
+# Promote your new database to the &quot;DATABASE_URL&quot; global constant
+# Example: $ heroku pg:promote HEROKU_POSTGRESQL_BRONZE_URL
+$ heroku pg:promote &lt;YOUR_HEROKU_URL&gt;
+
+# Push your repo to Heroku, start your app
+$ git push heroku master
+
+# Open the app in your browser
+$ heroku open
+
+# See your app&#39;s log, keep the stream open by using &quot;--tail&quot;
+$ heroku logs --tail
+</code></pre>
+
+<h3>Start Posting Messages!</h3>
+
+<p>Open a new shell and run this to start posting messages:</p>
+
+<pre><code class="bash">$ ruby post_message.rb
+</code></pre>
+
+<h3>Challenge Features</h3>
+
+<ul>
+<li>Format the time so it reads, for example, <code>Wednesday at 6:23 PM</code></li>
+<li>Highlight links posted in the message body (using the <code>&lt;a&gt;</code> tag)</li>
+<li>Implement the <code>x</code> button to delete an individual message</li>
+</ul>
+
+      </div>
+    </div>
+    
+    <script src="http://s3.amazonaws.com/blacktm/js/ga-blacktm.js"></script>
+    <script src="http://yandex.st/highlightjs/7.3/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
