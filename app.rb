@@ -19,38 +19,44 @@
 # through all the @messages and print out the
 # data
 require 'sinatra'
+require "sinatra/reloader"
 require 'active_record'
 require 'data_mapper'
 require 'dm-postgres-adapter'
+require 'pry'
+
+require_relative 'models/message'
+
 
 ENV['DATABASE_URL'] ||= 'postgres://avi:@localhost/messages_app'
 
 DataMapper.setup(:default, ENV['DATABASE_URL'])
 
-get '/' do
-  @messages = Message.all
-  erb :messages
-end
+class MessageApp < Sinatra::Base
+  configure :development do
+    register Sinatra::Reloader
+  end
 
-get '/migrate' do
-  DataMapper.auto_migrate!
-  "Database migrated! All tables reset."
-end
 
-post '/' do
-  # TODO: Read the incoming message, save it to the database
+  get '/' do
+    @messages = Message.all
+    @body_class = "messages"
 
-end
+    erb :messages
+  end
 
-class Message
-  include DataMapper::Resource
+  get '/migrate' do
+    DataMapper.auto_migrate!
+    "Database migrated! All tables reset."
+  end
 
-  puts self
+  post '/' do
+    params.delete("to")
+    @message = Message.new(params)
+    @message.save
+    redirect '/'
+  end
 
-  property :id, Serial            # Auto-increment integer id
-  property :from, String          # A short string of text
-  property :content, Text         # A longer text block
-  property :created_at, DateTime  # Auto assigns data/time
 end
 
 DataMapper.finalize

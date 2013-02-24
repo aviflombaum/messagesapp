@@ -9,27 +9,36 @@
     <div class="header">My Messages</div>
 
     <div id="message-stream">
-      
-      <!--
-      Example HTML Structure:
-      
+      <%
+        # for each message in @messages
+        # render the template below
+        # filling the content from
+        # the message
+      %>
+      <% @messages.each do |message| %>
       <div class="message">
         <a href="" class="close"></a>
         <div class="from">
-          Bob Saget
+          <%= message.from %>
         </div>
         <div class="content">
-          Well, hello there!
+          <%= message.content %>
         </div>
         <div class="time">
-          Oct 15, 2012 3:43 PM
+          <%= message.created_at.strftime("%m %d %Y") %>
         </div>
       </div>
-      -->
-      
-      
-      <!-- TODO: Add messages to the page -->
-      
+      <% end %>
+
     </div>
+
+
+    <form method="post" action="/">
+      To: <input type="text" name="to" /> <br/>
+      From: <input type="text" name="from" /> <br/>
+      Content: <textarea name="content"></textarea>
+
+      <button type="submit">Send Message</button>
+    </form>
   </body>
 </html>
